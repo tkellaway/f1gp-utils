@@ -1,0 +1,134 @@
+GpGap V1.0 15-Jul-95                        Trevor Kellaway (CIS:100331,2330)
+
+                 Grand Prix/World Circuit Gap Display
+                 ====================================
+
+GpGap improves the 'G' gap command for MPS Grand Prix/World Circuit from
+just displaying who is in-front/behind you to showing the other cars,
+the lap the leader is on and the gap back from the leader to each car.
+
+GpGap requires V1.05 (European/USA/Italian) of Grand Prix/World Circuit.
+
+File List
+---------
+     GPGAP.EXE      The TSR which should be loaded before F1GP.
+     GPGAP.TXT      This help file, but you know that <g>.
+
+Installation
+------------
+Copy GPGAP.EXE to any directory on your hard disk. The directory where you
+have F1GP installed is probably the best place (normally C:\GPRIX).
+
+Loading GPGAP
+-------------
+GpGap is a TSR utility and should be loaded before F1GP. GpGap takes 2Kb of
+memory, it may be loaded high if you don't have enough memory to run F1GP.
+
+     Usage: GpGap [-h?] [-dN] [-tN] [-u]
+            -dN       Delay N seconds between display (default 3s).
+            -tN       Display top N places (default 6).
+            -h,-?     This help message.
+            -u        Unload TSR.
+
+
+How to use GPGAP and its non-obvious features
+---------------------------------------------
+GpGap extends the existing 'G' command in the game (this includes the
+automatic invocation of the 'G' command that is performed when you pass the
+start/finish line in a race). Initially you may find is hard to take in this
+information and still stay on the track! <g>. However with careful
+configuration of GpGap's parameters and selected glances you will quickly find
+you can keep track of the rest of the field during a race.
+
+GpGap allows the standard in-front/behind gap display to operate as normal
+for 5s. It will then restore the top part of your display so you can see your
+speed and will display the leader. The leader's lap number is displayed on the
+left of their name and the current race postion is displayed on the right.
+
+GpGap will also show you the time gap behind the leader for each car (to the
+left of the driver's name). Note that GpGap can only display this gap when
+the race positions have remained static for a lap. GpGap will display as many
+of the time gaps back from the leader as is possible. At the start of the
+race you won't see these gaps very often but as the race settles down they
+will appear most of the time. Even if a car is a lap or more behind the
+leader the gap will always be shown as a time (as opposed to the game just
+showing you "1 Lap").
+
+You can configure the number of the positions displayed by GpGap and the
+length of time each is held for. By default the top six cars are shown with a
+delay of 3s for each car. For example to display the entire field, pausing for
+2s use:
+
+     GPGAP -t26 -d3
+
+There is a tradeoff between the number of positions displayed and the hold
+time for each. Don't forget that the time to display all the positions should
+be less than the lap time. Also the hold time needs to be long enough so you
+can concentrate on your driving but still glance down at the positions.
+
+A good compromise is the top ten positions with a hold time of three seconds.
+This will give a total of 30s plus the initial 5s, this gives you ample time
+to trigger a display of the field at a more appropriate part of the track for
+easy viewing.
+
+You can invoke GpGap at anytime with the 'G' key, but if you cross the
+start/finish line then the game will cancel the current display. Note that
+your cockpit display maybe slightly confused for a bit, this is down to an
+existing bug in the game cockpit update routines.
+
+You can also cancel the current GpGap display at anytime by pressing the 'G'
+key whilst the gaps are being displayed. The game will redisplay the
+in-front/behind gap once and then revert to the normal display mode.
+
+You can also restart the gap display at anytime by pressing the 'G' key
+twice. This is useful if you are too busy driving the first part of a lap to
+look, but can then restart the display when you get to a part of the track
+where it is easier to view the information displayed.
+
+GpGap takes a snapshot of the field when you press the 'G' key so if you are
+displaying the whole field the information could well be out of date by the
+time it is displayed. (This includes the current lap the leader is on.)
+
+Due to a limit in the existing game display routines the leader's current lap
+number only goes up to lap 63. Anything above this value is not shown. If a
+car is more than 10mins behind the leader the gap time won't be displayed.
+
+
+Unloading GPGAP
+---------------
+When you have finished using GPGAP you can unload it to reclaim the memory
+(~2Kb) that it uses. Type:
+
+     GPGAP -u
+
+Note that if you have loaded other TSRs after GPGAP you must unload these
+in the reverse order they were loaded. 
+
+See Also
+--------
+You may find GPBUTTON useful as this allows you to map a joystick/wheel
+button to a keyboard key, the 'G' for the gap display being a favourite!
+
+Change History
+--------------
+V1.0 15-Jul-95      First release.
+
+Further Info
+------------
+Please send any suggestions, comments, or bug reports (include the version 
+of GPGAP you are using) to the author Trevor Kellaway at:
+
+CompuServe:    100331,2330
+Internet:      100331.2330@compuserve.com
+
+This program may be freely copied and distributed, as long as it is not
+modified in any way, no fee is charged and this file is always included.
+This program is provided "as is" with no warranties expressed or implied.
+The author will not be held responsible for any losses incurred, either
+directly or indirectly by the use of this program.
+
+This is *not* an MPS product. If you have problems with the game then try it
+without this program loaded.
+
+
+

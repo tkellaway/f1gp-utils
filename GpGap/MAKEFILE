@@ -1,0 +1,51 @@
+##
+## GpGap TSR for MPS GP.EXE
+##
+
+CC             =    bcc
+CC_FLAGS       =    -v -c -y -O2 -1 -u- -w
+ASM            =    tasm
+ASM_FLAGS      =    -Ml -zd -zi
+LINK           =    tlink /l /m /s /c /Tde
+EXE2BIN        =    exe2bin
+
+##                                    Code class/segment  Data class/group/segment    BSS class/group/segment
+CC_RESIDENT    =    $(CC) $(CC_FLAGS) -zACODE -zCTSR_CODE -zTDATA -zSTSR -zRTSR_DATA  -zBDATA -zGTSR -zDTSR_DATA 
+CC_TRANSIENT   =    $(CC) $(CC_FLAGS) -zATMP  -zCTSR_TMP  -zTTMP  -zSTSR  -zRTSR_TMP  -zBTMP  -zGTSR  -zDTSR_TMP  
+
+##
+## Note: endres.obj *must* be last!
+##
+OBJS           =    gpgap.obj install.obj int08.obj int11.obj parse.obj \
+                    endres.obj
+
+.asm.obj:      
+               $(ASM) $< $(ASM_FLAGS),,;
+
+all:           gpgap.exe
+
+gpgap.obj:     gpgap.asm segments.inc gpgap.inc
+
+install.obj:   install.asm segments.inc gpgap.inc
+
+int08.obj:     int08.asm segments.inc gpgap.inc
+
+int11.obj:     int11.asm segments.inc gpgap.inc
+
+parse.obj:     parse.c gpgap.h version.i
+               $(CC_TRANSIENT) parse.c 
+
+endres.obj:    endres.asm segments.inc
+
+gpgap.exe:     $(OBJS) makefile
+               $(LINK) @&&!
+                    $(OBJS),gpgap;
+!
+               msym gpgap
+
+zip:           
+               if exist gpgap.zip del gpgap.zip
+               pkzip gpgap gpgap.txt gpgap.exe
+
+buildall:      all
+
