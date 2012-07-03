@@ -1,0 +1,47 @@
+##
+## Computer Car's Pit Strategy TSR for MPS GP.EXE
+##
+
+CC             =    bcc
+CC_FLAGS       =    -v -c -y -O2 -1 -u- -w
+ASM            =    tasm
+ASM_FLAGS      =    -Ml -zd -zi
+LINK           =    tlink /l /m /s /c /Tde
+EXE2BIN        =    exe2bin
+
+##                                    Code class/segment  Data class/group/segment    BSS class/group/segment
+CC_RESIDENT    =    $(CC) $(CC_FLAGS) -zACODE -zCTSR_CODE -zTDATA -zSTSR -zRTSR_DATA  -zBDATA -zGTSR -zDTSR_DATA 
+CC_TRANSIENT   =    $(CC) $(CC_FLAGS) -zATMP  -zCTSR_TMP  -zTTMP  -zSTSR  -zRTSR_TMP  -zBTMP  -zGTSR  -zDTSR_TMP  
+
+##
+## Note: endres.obj *must* be last!
+##
+OBJS           =    ccpit.obj install.obj int08.obj int11.obj pit.obj parse.obj endres.obj
+
+.asm.obj:      
+               $(ASM) $< $(ASM_FLAGS),,;
+
+all:           ccpit.com
+
+ccpit.obj:     ccpit.asm segments.inc ccpit.inc
+
+install.obj:   install.asm segments.inc ccpit.inc
+
+int08.obj:     int08.asm segments.inc ccpit.inc
+
+int11.obj:     int11.asm segments.inc ccpit.inc
+
+pit.obj:       pit.c ccpit.h
+               $(CC_RESIDENT) pit.c
+
+parse.obj:     parse.c ccpit.h version.i
+               $(CC_TRANSIENT) parse.c 
+
+endres.obj:    endres.asm segments.inc
+
+ccpit.com:     $(OBJS) makefile
+               $(LINK) $(OBJS),ccpit;
+               msym ccpit
+
+buildall:      all
+
