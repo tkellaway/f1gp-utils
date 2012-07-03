@@ -1,0 +1,97 @@
+GpButton V1.1 12-Jan-95                      Trevor Kellaway (CIS:100331,2330)
+
+      Grand Prix/World Circuit Joystick Button to Key Converter
+      =========================================================
+
+Have you ever wished you could use those spare buttons on your joystick or
+wheel to emulate a keyboard command? Well now you can, no more stretching
+to the keyboard whilst driving and crashing <g>.
+
+GpButton allows you define any of the four possible joystick buttons to
+simulate pressing a key on the keyboard. GpButton requires V1.05 of
+Grand Prix/World Circuit.
+
+File List
+---------
+     GPBUTTON.EXE   The TSR which should be loaded before F1GP.
+     GPBUTTON.TXT   This help file, but you know that <g>.
+
+Installation
+------------
+Copy GPBUTTON.EXE to any directory on your hard disk. The directory where you
+have F1GP installed is probably the best place (normally C:\GPRIX).
+
+Loading GPBUTTON
+----------------
+GpButton is a TSR utility and should be loaded before F1GP. GpButton takes
+2Kb of memory, it may be loaded high if you don't have enough memory to
+run F1GP.
+
+     Usage: GpButton [-A1='?'] [-A2='?'] [-B1='?'] [-B2='?'] [-h?] [-u]
+            -A1='?'   Joystick A Button 1=?.
+            -A2='?'   Joystick A Button 2=?.
+            -B1='?'   Joystick B Button 1=?.
+            -B2='?'   Joystick B Button 2=?.
+            -h,-?     This help message.
+            -u        Unload TSR.
+
+     '?' may be one of:
+            1234567890 abcdefghijklmnopqrstuvwxyz
+            F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 Ent
+
+For eaxmple, to configure joystick B button 1 to simulate the 'G' (Gap)
+function and joystick B button 2 to the Pause function (' ' or 'P' depending
+on configuration) use:
+
+     GPBUTTON -B1='g' -B2='p'
+
+The joystick buttons you use with GpButton must not be already in use by the
+game. GpButton simulates key presses when the joystick is currently enabled,
+this means that if you crash out of the race the buttons will stop working
+whilst you are watching the other cars (note this may also be true in some
+of the menus).
+
+Non-Standard Keyboards
+----------------------
+Due to the way GpButton works it has to map the actual "scan code" of the
+keyboard key to the desired letter. The PC assigns a unique "scan code"
+number to every key on the keyboard and these are the same for all keyboards.
+However, for different nationality keyboards (notably French and German) the
+mapping from the standard QWERTY layout to QWERTZ and AZERTY is performed in
+software. GpButton assumes you have a standard QWERTY keyboard. If you have a
+non-standard key layout then just work out where the key you require would be
+on a standard keyboard and GpButton should work fine.
+
+Unloading GPBUTTON
+------------------
+When you have finished using GPBUTTON you can unload it to reclaim the memory
+(~2Kb) that it uses. Type:
+
+     GPBUTTON -u
+
+Note that if you have loaded other TSRs after GPBUTTON you must unload these
+in the reverse order they were loaded. 
+
+Change History
+--------------
+V1.0 07-May-95      First release.
+V1.1 12-May-95      Added support for <Enter> key.
+
+Further Info
+------------
+Please send any suggestions, comments, or bug reports (include the version 
+of GPBUTTON you are using) to the author Trevor Kellaway at:
+
+CompuServe:    100331,2330
+Internet:      100331.2330@compuserve.com
+
+This program may be freely copied and distributed, as long as it is not
+modified in any way, no fee is charged and this file is always included.
+This program is provided "as is" with no warranties expressed or implied.
+The author will not be held responsible for any losses incurred, either
+directly or indirectly by the use of this program.
+
+This is *not* an MPS product. If you have problems with the game then try it
+without this program loaded.
+
+
