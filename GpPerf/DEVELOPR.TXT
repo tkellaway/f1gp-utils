@@ -1,0 +1,185 @@
+GpPerf V3.0 30-Oct-95                        Trevor Kellaway (CIS:100331,2330)
+
+       Grand Prix/World Circuit Car Performance Developer Note
+       =======================================================
+
+This document describes the technical details of the log file format used
+by GPPERF. The intended audience is computer programmers who wish to write
+their own data processing/viewer programs.
+
+How GPPERF Installs
+-------------------
+GPPERF is a DOS TSR which is loaded before F1GP. GPPERF hooks one of the
+DOS interrupts which F1GP calls when it starts up. Every time this DOS
+interrupt is called GPPERF checks to see if the calling program is F1GP.
+When it recognises F1GP (either the US or European version) has been loaded
+it determines where in memory F1GP has loaded and patches a number of hooks
+into the F1GP code. These hooks trap various parts of the game's code and
+are used to modify the game's behaviour or just obtain snap-shots of data.
+
+When Is An Entry Logged?
+------------------------
+GPPERF logs a performance entry every time the car enters a new track
+segment. F1GP divides each track into a number of fixed length segments
+(approx. every ~16ft, ~5m). An entry is logged every time the car travels from
+one segment to another, note that this is also the case if the player stops
+and reverses back over a previously crossed segment (or drives the wrong way
+up the track).
+
+How Many Segments Are There?
+----------------------------
+As each segment is a fixed length and the tracks are different lengths
+then each track will have a different number of segments. The following
+table gives the maximum track segment numbers for each track (excluding
+pit lanes, i.e., this is for a flying lap):
+
+     Circuit                       #    Segments
+     --------------------------------------------
+     Phoenix - United States       00   0767
+     Interlagos - Brazil           01   0887
+     Imola - San Marino            02   1032
+     Monte-Carlo - Monaco          03   0699
+     Montreal - Canada             04   0913
+     Mexico City - Mexico          05   0904
+     Magny Cours - France          06   0875
+     Silverstone - Great Britain   07   1056
+     Hockenheim - Germany          08   1395
+     Hungaroring - Hungary         09   0813
+     Spa-Francorchamps - Belgium   10   1416
+     Monza - Italy                 11   1188
+     Estoril - Portugal            12   0891
+     Barcelona - Spain             13   0972
+     Suzuka - Japan                14   1202
+     Adelaide - Australia          15   0803
+
+How Are The Segments Numbered?
+------------------------------
+The track segment numbering starts at 0000 which corresponds to the start/
+finish line. As you drive around the circuit (in the correct racing
+direction) the segment number increases by one per segment.
+
+The pit lane numbering is handled slightly differently. The pit entry lane
+number starts at a higher number than the highest normal lap segment (i.e.,
+the last segment before the s/f line). As normally we aren't interested in
+recording data for the pit lane the top bit (0x0800) of the track segment
+number is used to indicate that the car is in the pit lane. So, any segment
+idenity which is greater than 2048 (0x0800) indicates that the car is in the
+pit lane.
+
+The pit lane is divided into three parts:
+
+     Pit entry lane, Pit exit lane, Central pit lane.
+
+The entry and exit lanes will have initial values which are larger than the
+s/f number (even before the 0x0800 bit is set). The central part of the pit
+lane uses the same numbers as the corresponding piece of adjacent (straight)
+race track. Thus the point in the pit that corresponds to the s/f line will
+be segment 0000, but is will also have the 0x0800 bit set giving a value of
+2048.
+
+What Data Is Logged?
+--------------------
+The following information is logged for every track segment:
+
+typedef struct {
+     _byte     car_number;
+     _byte     circuit;
+     _word     track_segment_id;
+     _dword    time;
+     _byte     tyre_compound;
+     _byte     gear;
+     _word     revs;
+     _word     speed;
+     _word     steering;                /* New to V2.0 */
+     _word     accelerator;             /* New to V2.0 */
+     _word     brake;                   /* New to V2.0 */
+     _dword    x;                       /* New to V2.0 */
+     _dword    y;                       /* New to V2.0 */
+} PERFORMANCE_ENTRY;
+
+The car number can be obtained by masking with 0x3f, if the top bit it
+set (0x80) then this indicates that the player is driving (which will
+always be the case in this version of GPPERF, future versions may permit
+the logging of the computer cars as well).
+
+The circuit is a value from 0 to 15 indicating the track (see the table
+above for the corresponding track name for each index).
+
+The track segment identity contains two pieces of information. The top
+four bits of the word (0xf000) contains the major version number of the
+of the log structure used. This is so that viewer programs can support
+older log file formats as new larger log formats are introduced. It permits
+the viewer program to auto-detect which type of log file format is present.
+New structure entries will always be added at the end of the structure.
+
+The bottom 12 bits of the track segment identity contain the track segment
+number, with the top bit (0x0800) being set when the segment is part of
+the pit lane.
+
+The time is stored as a double word and is the number of milli-seconds
+(1/1000ths of a second). If any of the top three bits of the time are
+set then the time isn't valid. Note that due to the way the game implements
+the timer each segment entry may be up to 40ms out, the final lap finishing
+time (logged at segment 0000) will however be correct.
+
+The current tyre compound is stored, see GPPERF.H for the values.
+
+The current gear is stored, see GPPERF.H for the values. Note that it is
+possible to determine the difference between 1st gear and Spin turn gear.
+
+The current RPM is stored. Note that this value can exceed the 14000 RPM
+limit of the car's display. If the RPM drops to less than the game's
+displayable value it may log it as 0 RPM.
+
+The car's speed is logged and this is always in Miles per Hour (MPH). To
+obtain the value in Kilometers per HOUR (KPH) multiply by 1.609.
+
+The steering input is encoded as +/- 1000h around 0000h. Positive values
+indicate a right turn, negative a left turn. Note that when using the
+keyboard to steer this field will always be zero.
+
+The steering and accelerator positions are logged. These range from
+0x0000 for off to 0x4000 for full on.
+
+The car's X,Y position is stored.
+
+What Constitutes a Lap?
+-----------------------
+A complete lap time can be obtained by taking the initial segment 0000
+entry and going right around the track and finishing on the segment 0000
+entry again (not the entry before 0000!). The actual lap time will be in
+the segment 0000 entry.
+
+So, for the first flying lap no time will be present in the segment 0000
+entry, at the end of the flying lap that lap time will be logged in segment
+0000. If another flying lap is undertaken its time will be logged in the
+next segment 0000 entry.
+
+When it comes to displaying a lap of data you should show all the entries
+between and including the two segment 0000 entries. Note that there could
+possibly be duplicate track segment entries (not necesarily adjacent) if
+the player crashed or drove the wrong way around any part of the circuit
+to recover from an off.
+
+If the player selects the game's replay mode this will not cause any logging
+of data entries while the replay is in progress.
+
+Normally if the player is using the intelligent <F8> mode of GPPERF it
+will automatically enable/disable itself at the start/end of flying laps.
+Note however that a player may abandon a lap which is being logged either
+by crashing, entering the pit lane, or using the <Q> key to quit back to
+their pit. In <F8> mode as soon as GPPERF sees the car enter the pit lane
+it will disable logging. So the log file will appear to just stop dead
+whereever the player was last on the track.
+
+The player could choose to use the <F7> manual logging mode. In this case
+data will also be logged as they drive along the pit lane.
+
+Determining Version of PRF
+--------------------------
+You can determine which version of data entry is logged by checking the
+top 4 bits of the track segment ID. See VERSION_MAJOR and LOG_VERSION
+in GPPERF.H.
+
+<END>
+

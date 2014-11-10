@@ -1,0 +1,410 @@
+GpPerf V3.1 25-Oct-95                        Trevor Kellaway (CIS:100331,2330)
+
+              Grand Prix/World Circuit Car Performance
+              ========================================
+
+GPPERF (V3.0) is a new engine management unit (EMU) for the MPS F1 Grand Prix
+(World Circuit) simulator (US & European V1.05).
+
+The EMU contains a black box data recorder which can record (to disk) the
+speed, RPM and gear (& more) every ~16ft (~5m) of the track. Current F1 style
+RPM warning LEDs are also included, along with a tyre wear indication bar.
+
+Due to the large amounts of data being logged (~30Kb per lap) and the high
+speed it is being logged at (~12 per second) you should setup a RAM disk for
+the log file.
+
+Please read the rest of this file as it will probably answer some of
+questions you didn't even know you wanted to ask!
+
+
+File List
+---------
+     GPPERF.EXE     The TSR which should be loaded before F1GP.
+     GPPERF.TXT     This help file, but you know that <g>.
+     SHOWPERF.EXE   Simple PRF file viewer/exporter.
+     GPPERF.H       The C header file definition of a PRF record
+                    for developers of PRF viewer programs (you
+                    can delete this file).
+     DEVELOPR.TXT   Some notes for developers of PRF viewer
+                    programs (you can delete this file).
+
+
+Installation
+------------
+Copy GPPERF.EXE to any directory on your hard disk. The directory where you
+have F1GP installed is probably the best place (normally C:\GPRIX).
+
+
+Installing and Using a RAM disk
+-------------------------------
+DOS 5 and DOS 6 come with a RAM disk driver called RAMDRIVE.SYS.  This is an
+installable device driver that lets you use a portion of your extended memory
+as if it were a hard disk. Note that the contents of the RAM disk will be
+lost when you reboot (power down) your machine, therefore you must copy any
+data you wish to keep from the RAM disk to your hard disk before shutting the
+machine down.
+
+The main advantage of using a RAM disk is that it is very fast to access as
+it is purely solid state memory with no slow moving mechanical parts like a
+real hard disk.
+
+To install the RAM disk you need to add the following line(s) to your
+C:\CONFIG.SYS:
+
+     DEVICE=C:\DOS\HIMEM.SYS
+     DEVICE=C:\DOS\RAMDRIVE.SYS 512 /e
+
+If you don't have a C:\DOS directory modify the pathname to point to the DOS
+directory where RAMDRIVE.SYS is located. If you already have HIMEM.SYS
+present then add the RAMDRIVE.SYS line after the HIMEM.SYS line. When editing
+your CONFIG.SYS always make sure you have a boot floppy available just in
+case the machine won't boot. You can create a boot floppy with the following
+command (assuming your floppy drive is A:):
+
+     FORMAT A: /S
+
+The second parameter to RAMDRIVE.SYS (512) is the number of Kb of memory
+allocated to the RAM disk. If you only have 1Mb of memory you will have to
+decrease this to 300Kb or less. If you have >1Mb you will be able to increase
+it (I have 8Mb of RAM and use a 2Mb RAM disk by specifying 2000). Roughly
+14Kb is logged per lap (this varies depending on the circuit length) and
+512Kb will allow storage of about 36 timed laps of data.
+
+The RAMDRIVE.SYS "/e" switch tells DOS to allocate the RAM disk memory from
+your extended memory, as 600,000 bytes of the low DOS memory must be
+available for F1GP to run.
+
+After editing your CONFIG.SYS you must reboot your machine for the driver to
+create the RAM disk. When the machine reboots check that the driver installs
+OK and the drive letter that has been created for it. Normally the next free
+drive letter will be assigned, so if you only have one logical drive C: the
+RAM disk will install as D:. Note that if you have one logical drive (C:) and
+a CD-ROM (normally D:) then the RAM disk will be installed as D: and the
+CD-ROM will be moved to E:.
+
+
+Out of RAM Disk Space
+---------------------
+If the RAM disk fills up whilst logging the machine will beep and logging
+mode will be disabled. If you are running under a multi-tasker like Windows
+you can't just delete the log file from the RAM disk, you must also exit and
+restart F1GP to re-enable logging (you don't need to unload/reload GPPERF,
+just restart F1GP).
+
+
+Loading GPPERF
+--------------
+By default GPPERF.EXE will create its log file (called GPPERF.PRF) in the
+current directory where you load GPPERF.EXE. As you must ensure that the log
+file is placed on your RAM disk use the "-f" switch to specify the log file
+location and filename. E.g., if your RAM disk is D: then use:
+
+     GPPERF -fD:\GPPERF.PRF
+
+Alternatively move to the RAM disk and load GPPERF (you may need to specify
+the full path to GPPERF.EXE if it isn't in your PATH):
+
+     D:
+     C:\GPRIX\GPPERF
+
+GPPERF will use the default log filename of GPPERF.PRF in the default
+directory, which is currently D: the RAM disk.
+
+If you only just have the 600,000 bytes of low DOS memory available that F1GP
+requires then you may need to load GPPERF into high memory (GPPERF uses ~3Kb
+of memory). To load it high you must have Upper Memory Blocks available
+(UMBs). DOS includes a memory manager called EMM386 which will provide UMBs
+(on 386/486/Pentium machines only, not 286s). Third party memory managers
+are also available that provide UMBs, e.g., QEMM and 386MAX. Depending on the
+memory manager you are using you need to use either the LH or LOADHIGH
+command in front of GPPERF at the DOS command prompt. E.g.,
+
+     LH GPPERF -fD:\GPPERF.PRF
+
+You may also change some of the other defaults of GPPERF when you load it.
+
+     Usage: GpPerf [-lN] [-aN -bN -cN] [-h?] [-u] [-f(filename)]
+            -l(N)     Auto-log for N laps (default 1 lap).
+            -f(name)  Specify log filename's location.
+            -a(N)     Specify rev limit #1 (default 10000).
+            -b(N)     Specify rev limit #2 (default 11500).
+            -c(N)     Specify rev limit #3 (default 13000).
+            -d        Startup with logging disabled.
+            -t        Startup with tyre wear display disabled.
+            -n(N)     Log for computer car N only.
+            -h,-?     This help message.
+            -u        Unload TSR.
+
+These other options are described in more detail below.
+
+
+Unloading GPPERF
+----------------
+When you have finished using GPPERF you can unload it to reclaim the memory
+(~3Kb) that it uses. Type:
+
+     GPPERF -u
+
+Note that if you have loaded other TSRs after GPPERF you must unload these in
+the reverse order they were loaded.
+
+
+Co-existing with SPLITTIM
+-------------------------
+If you are using SPLITTIM.EXE (V2.0 or earlier) then you must load it *after*
+loading GPPERF for both programs to co-exist. If you load them the wrong way
+around SPLITTIM will still work but GPPERF won't do anything (you can tell
+this as the top left LED in your car's cockpit is yellow by default when
+GPPERF is running). Note that SPLITTIM is now obsolete as GPLAP V5.0 now
+incorporates its functionality.
+
+
+Changes to your F1GP Cockpit
+----------------------------
+The main change to your car's cockpit is the bank of 5 LEDs to the left of
+your steering wheel (in this description these are referred to from bottom to
+top, #1 to #5). Several new keyboard commands have also been added (<F7>,
+<F8>, <F9>, <F10>).
+
+Previously the game used these 5 LEDs to indicate the current difficulty
+level (opposition standard). Use the menu option "OPTIONS/GAME" to
+check/change this.
+
+The top LED (#5) now indicates the state of your EMU. The LED changes colours
+depending on the current mode of the EMU.
+
+The bottom 3 LEDs are used as an engine RPM warning (like most real F1 cars
+now use). By default LED #1 will light when you reach 10000 RPM, LED #2 at
+11500 RPM and LED #3 at 13000 RPM. The first two LEDs will turn yellow when
+on, the third LED will turn red.
+
+LED #4 isn't used.
+
+The new <F7> and <F8> keys control the logging mode, see below for more
+details.
+
+The <F9> key toggles the MPH (KM/H) display between its normal speed display
+and the current track segment count. Each circuit is divided up into ~16ft
+(~5m) segments. This mode allows you to determine exactly which point on a
+circuit corresponds to a logged data entry. Note that due to the display
+limit of 3 digits at some tracks which have more than 999 segments the
+displayed segment number will wrap back to 000, even though it is really
+1000+.
+
+The <F10> key toggles the tyre wear display bar on/off. This bar appears
+just below the speed readout.
+
+
+Changing RPM Limits
+-------------------
+You can customise the RPM limit points by specifying your own values when you
+load GPPERF.EXE. To change to 9000, 11000, 13000 use:
+
+     GPPERF -fD:\GPPERF.PRF -a9000 -b11000 -c13000
+
+You must specify the RPM values in increasing order. If you don't want the
+RPM warning LEDs then set them all to a high value, e.g.,
+
+     GPPERF -fD:\GPPERF.PRF -a14000 -b14000 -c14000
+
+
+Manual Logging Mode (Blue LED)
+------------------------------
+The <F7> key toggles between logging mode off (Green LED) and manual logging
+mode on (Blue LED). In manual logging mode data is logged all the time, even
+when you are travelling into/out of the pit lane and on warmup and slow down
+laps. To reduce the amount of unwanted data logged use the automatic logging
+mode. Note that when you are in the pit lane entries are logged with a
+segment value of greater than 2000.
+
+
+Automatic Logging Mode (Red/Yellow LED)
+---------------------------------------
+The <F8> key toggles between logging mode off (Green LED) and automatic
+logging mode (Yellow/Red LED). Automatic mode intelligently enables/disables
+logging on-the-fly as you cross the start/finish line.
+
+When the LED is yellow automatic logging mode is enabled but it is waiting
+for you to start a flying lap. When you cross the start/finish line for the
+first time the LED changes to red indicating that logging is now is progress.
+When you complete your flying lap logging mode will return to its pending
+mode indicated by the yellow LED.
+
+You can customise the number of flying laps that logging stays enabled for
+using the "-l" command line option. E.g., if you normally do 3 timed
+qualifying laps (1 out lap, 3 timed laps and 1 slow down lap) then use:
+
+     GPPERF -fD:\GPPERF.PRF -l3
+
+GPPERF will now leave logging enabled for three timed laps then return to its
+pending mode. Note that the games annoying behaviour of requesting you to pit
+after one timed lap is also modified, you won't be called into the pit until
+logging mode returns to pending mode (the computer cars will still only do a
+single timed lap).
+
+GPPERF copes with replays and returning early to the pit (either via the pit
+lane or using the 'Q' key). If you return to the pit lane logging mode
+returns to pending automatically. Viewing replays of crossing the
+start/finish line will not affect the current logging mode.
+
+Note that logging during a race is handled slightly differently, in a race
+automatic logging will never be automatically disabled when you enter the
+pits and the '-l' lap countdown will be ignored. The automatic enable feature
+will still work when you cross the start/finish line for the first time.
+
+No Logging Mode (Green LED)
+---------------------------
+If you don't wish logging mode to be enabled toggle either <F7> or <F8> until
+the LED turns to green. No data will ever be logged while this mode is
+selected. You can also use the '-d' command line option to force logging mode
+to be disabled at startup (rather than enabled/pending which is the default).
+
+Logging a Computer Car
+----------------------
+You may also log just a computer car. Specify the computer car number with the
+-n option. E.g., to log car number 5 use:
+
+     GPPERF -n5
+
+Note to change the car number logged or disable it you will need to unload
+GPPERF and reload it (use GPPERF -u).
+
+
+Tyre Wear Indication
+--------------------
+The cockpit now also includes a horizontal tyre wear indication bar just
+below the speed readout. When you first drive out of the pits a red indicator
+bar will appear, the bars size will gradually decrease to zero as the tyres
+come up to full working temperature (and hence maximum grip). At some circuits
+you will get extra grip which will be indicated by a yellow bar. When the
+tyres reach the optimal level the indicator bar will remains static, once the
+tyres start to wear out then the grip will drop and the indicator bar will
+drop back from yellow to an increasing red bar. Note that at different tracks
+you will get a different maximum grip level displayed (the size of the yellow
+bar), and at some tracks (like Canada) the yellow bar is never displayed.
+You can toggle the tyre wear indiciation on/off using the <F10> key.
+
+
+Viewing Log Files
+------------------
+OK, you've now got a large GPPERF.PRF file, how do you view it?  At present
+this package only includes SHOWPERF a DOS command line program for displaying
+the data in a human readable form, or in CSV (comma separated value) form for
+spreadsheet programs.
+
+A Windows program to view PRF files called GPA.ZIP (V4.0 or later) written
+by Steve Pritchard CIS:[100341,2464] is available on Compuserve in the
+SPRTSIMS area (GO SPRTSIMS, in library #6 Motorsports or #14 Racing
+Circuits).
+
+SHOWPERF Viewer
+---------------
+SHOWPERF is a DOS command line program used to view/filter *.PRF files.
+
+     Usage: ShowPerf [-fwcxk] [-itsrgdab] [-h?] [log filename]
+            -?/-h  This usage message.
+
+            -f     Write fastest lap to '?m??s???.PRF' file.
+            -w     Write all laps to '?m??s???.PRF' files.
+
+            -c     Display in CSV export format.
+            -x     Scale RPM & Gears to match speed scale (for CSV export).
+            -k     Display speed in KPH.
+
+     Filter options (all on by default)
+            -i     Identity of track segment.
+            -t     Time (elapsed time of session).
+            -s     Speed in MPH (or KPH).
+            -r     RPM.
+            -g     Gear.
+            -d     Direction (steering).
+            -a     Accelerator.
+            -b     Brake.
+
+By default SHOWPERF will try and open GPPERF.PRF in the current directory and
+display all entries in a human readable form.
+
+
+Exporting CSV Files
+-------------------
+Use the '-c' option to obtain an output file in CSV format suitable for
+import into a spreadsheet. E.g.,
+
+     SHOWPERF -c GPPERF.PRF > GPPERF.CSV
+
+When using a spreadsheet to graph a CSV you may find it useful to use the
+'-x' option to scale the Speed/RPM/Gears so they all use the same Y-axis.
+E.g.,:
+
+     SHOWPERF -c -x GPPERF.PRF > GPPERF.CSV
+
+To obtain only the speed and RPM data for graphing use the filter options,
+e.g.,:
+
+     SHOWPERF -c -x -s -r GPPERF.PRF > GPPERF.CSV
+
+The displayed data can be filtered to only include the specified items, by
+default all data is included.
+
+
+Filtering Log Files
+-------------------
+You can use SHOWPERF to filter a large GPPERF.PRF file. To obtain just the
+fastest lap from a GPPERF.PRF file use:
+
+     SHOWPERF -f GPPERF.PRF
+
+This will create a file with a filename based on the fastest lap, e.g., if
+the fastest lap was 1m10.386 then a file called 1M10S386.PRF will be created.
+
+You can view these ?M??S???.PRF using SHOWPERF in exactly the same way as a
+large GPPERF.PRF file.
+
+If you wish to break a complete GPPERF.PRF file into individual laps then use
+the '-w' option. This will create a file for every time. Note that if there
+are duplicate times then the previous file for that specific time will be
+overwritten by the duplicate lap time data.
+
+
+A Note To PRF Viewer Developers
+-------------------------------
+If you are interested in developing your own viewing program see the C header
+file enclosed (GPPERF.H and the DEVELOPR.TXT ASCII text file).
+
+
+Change History
+--------------
+V1.0 12/Nov/94      First release.
+V1.1 02/Jan/95      Added '-d' option.
+                    Fixed bug where <F7> & <F8> when car is on the jacks
+                    didn't update the LED due to some machines keyboard
+                    interrupt BIOS handling switching stacks.
+                    No automatic logging disabling when in a race.
+V2.0 11-Jun-95      Added logging of steering, acceleration, braking and
+                    car's X/Y position.
+V3.0 15-Oct-95      Fixed timing variation bug in game.
+                    In linked play mode only the local car is now logged.
+                    Fixed error messages which display 'ccpit'.
+                    Italian version now supported.
+                    Specified computer car can now be logged.
+                    Display of tyre grip added.
+                    Updated SHOWPERF for display of steering, accel & braking.
+
+Further Info
+------------
+Please send any suggestions, comments, or bug reports (include the version
+of GPPERF you are using) to the author Trevor Kellaway at:
+
+CompuServe:    100331,2330
+Internet:      100331.2330@compuserve.com
+
+This program may be freely copied and distributed, as long as it is not
+modified in any way, no fee is charged and this file is always included.
+This program is provided "as is" with no warranties expressed or implied.
+The author will not be held responsible for any losses incurred, either
+directly or indirectly by the use of this program.
+
+This is *not* an MPS product. If you have problems with the game then try it
+without this program loaded.
+

@@ -1,0 +1,66 @@
+##
+## Computer Car's Pit Strategy TSR for MPS GP.EXE
+##
+
+CC             =    bcc
+CC_FLAGS       =    -v -c -y -O2 -1 -u- -w
+ASM            =    tasm
+ASM_FLAGS      =    -Ml -zd -zi
+LINK           =    tlink /l /m /s /c /Tde
+EXE2BIN        =    exe2bin
+
+##                                    Code class/segment  Data class/group/segment    BSS class/group/segment
+CC_RESIDENT    =    $(CC) $(CC_FLAGS) -zACODE -zCTSR_CODE -zTDATA -zSTSR -zRTSR_DATA  -zBDATA -zGTSR -zDTSR_DATA 
+CC_TRANSIENT   =    $(CC) $(CC_FLAGS) -zATMP  -zCTSR_TMP  -zTTMP  -zSTSR  -zRTSR_TMP  -zBTMP  -zGTSR  -zDTSR_TMP  
+
+##
+## Note: endres.obj *must* be last!
+##
+OBJS           =    gpperf.obj logentry.obj install.obj int08.obj int11.obj \
+                    parse.obj f_lxmul.obj \
+                    endres.obj
+
+.asm.obj:      
+               $(ASM) $< $(ASM_FLAGS),,;
+
+all:           gpperf.exe showperf.exe
+
+gpperf.ash:    gpperf.h
+               h2ash gpperf.h
+               if exist gpperf.$$$ del gpperf.$$$
+               ren gpperf.ash gpperf.$$$
+               sed -e /GLOBAL/d gpperf.$$$ > gpperf.ash
+               if exist gpperf.$$$ del gpperf.$$$
+
+gpperf.obj:    gpperf.asm segments.inc gpperf.inc gpperf.ash
+
+install.obj:   install.asm segments.inc gpperf.inc
+
+int08.obj:     int08.asm segments.inc gpperf.inc
+
+int11.obj:     int11.asm segments.inc gpperf.inc
+
+logentry.obj:  logentry.c gpperf.h
+               $(CC_RESIDENT) logentry.c 
+
+parse.obj:     parse.c gpperf.h version.i
+               $(CC_TRANSIENT) parse.c 
+
+endres.obj:    endres.asm segments.inc
+
+gpperf.exe:    $(OBJS) makefile
+               $(LINK) @&&!
+                    $(OBJS),gpperf;
+!
+               msym gpperf
+
+showperf.exe:  showperf.c gpperf.h
+               $(CC) showperf.c 
+
+zip:           
+               if exist gpperf.zip del gpperf.zip
+               pkzip gpperf gpperf.txt gpperf.exe showperf.exe
+               pkzip gpperf gpperf.h developr.txt
+
+buildall:      all
+
